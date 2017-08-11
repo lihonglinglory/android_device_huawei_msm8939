@@ -1,0 +1,25 @@
+dtb-$(CONFIG_ARCH_MSM8916) += 	huawei_ple_701l_va.dtb \
+	huawei_ple_701w_va.dtb \
+	huawei_ple_702l_va.dtb \
+	huawei_ple_703l_va.dtb \
+	huawei_ple_703lt_va.dtb \
+
+ 
+ 
+DTB_NAMES := $(subst $\",,$(CONFIG_BUILD_ARM_APPENDED_DTB_IMAGE_NAMES))
+ifneq ($(DTB_NAMES),)
+DTB_LIST := $(addsuffix .dtb,$(DTB_NAMES))
+else
+DTB_LIST := $(dtb-y)
+endif
+
+targets += dtbs
+targets += $(addprefix ../, $(DTB_LIST))
+
+
+$(obj)/../%.dtb: $(src)/%.dts FORCE
+	$(call if_changed_dep,dtc)
+
+dtbs: $(addprefix $(obj)/../,$(DTB_LIST))
+
+clean-files := *.dtb
