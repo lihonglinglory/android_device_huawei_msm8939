@@ -558,7 +558,7 @@ void hall_work_func(struct work_struct *work)
 	if((camera_hall_support_is_true == true) && ((value == 0x10) || (value == 0x20)))
 		report_overturn_num += 1; 
 	/* DTS2015041508342 zhoujian wx221429 20150514 end > */	
-	input_event(hw_hall_dev.hw_input_hall, EV_MSC, MSC_SCAN, value);
+	input_report_switch(hw_hall_dev.hw_input_hall, SW_LID, value);
 	input_sync(hw_hall_dev.hw_input_hall);
 	atomic_dec(&irq_no_at);
 	/* < DTS2014072306064 wangcunyou 20140723 begin */
@@ -992,9 +992,13 @@ int hall_pf_probe(struct platform_device *pdev)
 	/* <DTS2014080404019 hufeng 20140804 begin */
 	hw_hall_dev.hw_input_hall->name = "hall";
 	/* DTS2014080404019 hufeng 20140804 end> */
-	set_bit(EV_MSC, hw_hall_dev.hw_input_hall->evbit);
+	set_bit(EV_SW, hw_hall_dev.hw_input_hall->evbit);
 	set_bit(MSC_SCAN, hw_hall_dev.hw_input_hall->mscbit);
+
+
+	input_set_capability(hw_hall_dev.hw_input_hall, EV_SW, SW_LID);
 	
+
 	err = input_register_device(hw_hall_dev.hw_input_hall);
 	if (err){
 		AK8789_ERRMSG("hw_input_hall regiset error %d", err);
