@@ -31,10 +31,7 @@
 #include <linux/fcntl.h>
 #include <linux/stat.h>
 /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-#include <linux/namei.h>
-#include <linux/dcache.h>
-#endif
+
 /* DTS2015052701547 zengwei 20150619 end > */
 #include <linux/string.h>
 #include <linux/quotaops.h>
@@ -1048,30 +1045,20 @@ errout:
 }
 
 /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-static inline int search_dirblock(struct buffer_head *bh,
-        struct inode *dir,
-        const struct qstr *d_name,
-        unsigned int offset,
-        struct ext4_dir_entry_2 ** res_dir,
-        char *ci_name_buf)
-#else
+
 static inline int search_dirblock(struct buffer_head *bh,
         struct inode *dir,
         const struct qstr *d_name,
         unsigned int offset,
         struct ext4_dir_entry_2 **res_dir)
-#endif
+
 /* DTS2015052701547 zengwei 20150619 end > */
 {
     /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-    return search_dir(bh, bh->b_data, dir->i_sb->s_blocksize, dir,
-            d_name, offset, res_dir, ci_name_buf);
-#else
+
     return search_dir(bh, bh->b_data, dir->i_sb->s_blocksize, dir,
             d_name, offset, res_dir);
-#endif
+
     /* DTS2015052701547 zengwei 20150619 end > */
 }
 
@@ -1165,33 +1152,14 @@ static inline int ext4_match (int len, const char * const name,
 }
 
 /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-static inline int ext4_ci_match (int len, const char * const name,
-        struct ext4_dir_entry_2 * de)
-{
-    if (len != de->name_len)
-        return 0;
-    if (!de->inode)
-        return 0;
-    return !strncasecmp(name, de->name, len);
-}
-#endif
+
 /* DTS2015052701547 zengwei 20150619 end > */
 
 /*
  * Returns 0 if not found, -1 on failure, and 1 on success
  */
 /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-int search_dir(struct buffer_head *bh,
-	       char *search_buf,
-	       int buf_size,
-	       struct inode *dir,
-	       const struct qstr *d_name,
-	       unsigned int offset,
-	       struct ext4_dir_entry_2 **res_dir,
-	       char *ci_name_buf)
-#else
+
 int search_dir(struct buffer_head *bh,
 	       char *search_buf,
 	       int buf_size,
@@ -1199,7 +1167,7 @@ int search_dir(struct buffer_head *bh,
 	       const struct qstr *d_name,
 	       unsigned int offset,
 	       struct ext4_dir_entry_2 **res_dir)
-#endif
+
 /* DTS2015052701547 zengwei 20150619 end > */
 {
 	struct ext4_dir_entry_2 * de;
@@ -1215,31 +1183,7 @@ int search_dir(struct buffer_head *bh,
 		/* do minimal checking `by hand' */
 
         /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-        if ((char *) de + namelen <= dlimit) {
-            if (ci_name_buf) {
-                if (ext4_ci_match (namelen, name, de)) {
-                    /* found a match - just to be sure, do a full check */
-                    if (ext4_check_dir_entry(dir, NULL, de, bh, bh->b_data,
-                                bh->b_size, offset))
-                        return -1;
-                    *res_dir = de;
-                    memcpy(ci_name_buf, de->name, namelen);
-                    ci_name_buf[namelen] = '\0';
-                    return 1;
-                }
-            } else {
-                if (ext4_match (namelen, name, de)) {
-                    /* found a match - just to be sure, do a full check */
-                    if (ext4_check_dir_entry(dir, NULL, de, bh, bh->b_data,
-                                bh->b_size, offset))
-                        return -1;
-                    *res_dir = de;
-                    return 1;
-                }
-            }
-        }
-#else
+
 		if ((char *) de + namelen <= dlimit &&
 		    ext4_match (namelen, name, de)) {
 			/* found a match - just to be sure, do a full check */
@@ -1249,7 +1193,7 @@ int search_dir(struct buffer_head *bh,
 			*res_dir = de;
 			return 1;
 		}
-#endif
+
         /* DTS2015052701547 zengwei 20150619 end > */
 		/* prevent looping on a bad block */
 		de_len = ext4_rec_len_from_disk(de->rec_len,
@@ -1290,18 +1234,12 @@ static int is_dx_internal_node(struct inode *dir, ext4_lblk_t block,
  * to brelse() it when appropriate.
  */
 /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-static struct buffer_head * ext4_find_entry_ci (struct inode *dir,
-        const struct qstr *d_name,
-        struct ext4_dir_entry_2 ** res_dir,
-        int *inlined,
-        char *ci_name_buf)
-#else
+
 static struct buffer_head * ext4_find_entry (struct inode *dir,
         const struct qstr *d_name,
         struct ext4_dir_entry_2 **res_dir,
         int *inlined)
-#endif
+
 /* DTS2015052701547 zengwei 20150619 end > */
 {
 	struct super_block *sb;
@@ -1327,13 +1265,10 @@ static struct buffer_head * ext4_find_entry (struct inode *dir,
 	if (ext4_has_inline_data(dir)) {
 		int has_inline_data = 1;
         /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-        ret = ext4_find_inline_entry(dir, d_name, res_dir,
-                &has_inline_data, ci_name_buf);
-#else
+
         ret = ext4_find_inline_entry(dir, d_name, res_dir,
                 &has_inline_data);
-#endif
+
         /* DTS2015052701547 zengwei 20150619 end > */
 		if (has_inline_data) {
 			if (inlined)
@@ -1354,12 +1289,9 @@ static struct buffer_head * ext4_find_entry (struct inode *dir,
 	}
     /* < DTS2015052701547 zengwei 20150619 begin */
     /* case insensitive conflicts with dx, so skip it. */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-    if ((!ci_name_buf) &&
-            (is_dx(dir))) {
-#else
+
         if (is_dx(dir)) {
-#endif
+
             /* DTS2015052701547 zengwei 20150619 end > */
 		bh = ext4_dx_find_entry(dir, d_name, res_dir, &err);
 		/*
@@ -1426,14 +1358,10 @@ restart:
 		}
 		set_buffer_verified(bh);
         /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-        i = search_dirblock(bh, dir, d_name,
-                block << EXT4_BLOCK_SIZE_BITS(sb), res_dir,
-                ci_name_buf);
-#else
+
         i = search_dirblock(bh, dir, d_name,
                 block << EXT4_BLOCK_SIZE_BITS(sb), res_dir);
-#endif
+
         /* DTS2015052701547 zengwei 20150619 end > */
 		if (i == 1) {
 			EXT4_I(dir)->i_dir_start_lookup = block;
@@ -1468,15 +1396,7 @@ cleanup_and_exit:
 }
 
 /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-static inline struct buffer_head * ext4_find_entry (struct inode *dir,
-        const struct qstr *d_name,
-        struct ext4_dir_entry_2 ** res_dir,
-        int *inlined)
-{
-    return ext4_find_entry_ci(dir, d_name, res_dir, inlined, NULL);
-}
-#endif
+
 /* DTS2015052701547 zengwei 20150619 end > */
 
 static struct buffer_head * ext4_dx_find_entry(struct inode *dir, const struct qstr *d_name,
@@ -1499,15 +1419,11 @@ static struct buffer_head * ext4_dx_find_entry(struct inode *dir, const struct q
 			goto errout;
 		}
         /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-        retval = search_dirblock(bh, dir, d_name,
-                block << EXT4_BLOCK_SIZE_BITS(sb), res_dir,
-                NULL);
-#else
+
         retval = search_dirblock(bh, dir, d_name,
                 block << EXT4_BLOCK_SIZE_BITS(sb),
                 res_dir);
-#endif
+
         /* DTS2015052701547 zengwei 20150619 end > */
 		if (retval == 1) { 	/* Success! */
 			dx_release(frames);
@@ -1544,25 +1460,16 @@ static struct dentry *ext4_lookup(struct inode *dir, struct dentry *dentry, unsi
 	struct ext4_dir_entry_2 *de;
 	struct buffer_head *bh;
     /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-    struct qstr ci_name;
-    char ci_name_buf[EXT4_NAME_LEN+1];
-#endif
+
     /* DTS2015052701547 zengwei 20150619 end > */
 
 	if (dentry->d_name.len > EXT4_NAME_LEN)
 		return ERR_PTR(-ENAMETOOLONG);
 
     /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-    ci_name_buf[0] = '\0';
-    if (flags & LOOKUP_CASE_INSENSITIVE)
-        bh = ext4_find_entry_ci(dir, &dentry->d_name, &de, NULL, ci_name_buf);
-    else
-        bh = ext4_find_entry(dir, &dentry->d_name, &de, NULL);
-#else
+
     bh = ext4_find_entry(dir, &dentry->d_name, &de, NULL);
-#endif
+
     /* DTS2015052701547 zengwei 20150619 end > */
 	inode = NULL;
 	if (bh) {
@@ -1587,16 +1494,9 @@ static struct dentry *ext4_lookup(struct inode *dir, struct dentry *dentry, unsi
 		}
 	}
     /* < DTS2015052701547 zengwei 20150619 begin */
-#ifdef CONFIG_SDCARD_FS_CI_SEARCH
-    if (ci_name_buf[0] != '\0') {
-        ci_name.name = ci_name_buf;
-        ci_name.len = dentry->d_name.len;
-        return d_add_ci(dentry, inode, &ci_name);
-    } else
-        return d_splice_alias(inode, dentry);
-#else
+
     return d_splice_alias(inode, dentry);
-#endif
+
     /* DTS2015052701547 zengwei 20150619 end > */
 }
 
